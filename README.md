@@ -5,7 +5,6 @@ Predict a star's type (red dwarf, brown dwarf, white dwarf, main sequence, super
 **Live demo:** [add your Streamlit link here]
  
 ![HR diagram](reports/figures/hr_diagram.png)
-*Replace with your Hertzsprung-Russell diagram from notebook 01.*
  
 ## Summary
  

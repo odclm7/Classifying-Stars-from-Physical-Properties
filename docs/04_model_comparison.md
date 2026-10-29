@@ -1,33 +1,4 @@
-## Model Comparison and Selection
- 
-Notebook: `notebooks/04_model_comparison.ipynb` (comparison, tuning and selection in one notebook)
-Input: `data/stars_transformed.csv` · Output: `models/star_classifier.joblib`
- 
-### Purpose
- 
-Decide which model and which input features to deploy in the web app. The dataset is small (240 stars) and several models reach near-perfect accuracy, so the comparison is designed to answer more than "which model scores highest":
- 
-1. Which **features** are worth collecting from app users?
-2. Which **models** are genuinely better, and which are only tied within noise?
-3. Does **tuning** change the answer?
-4. Which model is the best choice **for the application** (calibrated probabilities, robustness, explainability)?
-### 1. Setup
- 
-**Train/test split.** 80/20, stratified on `Type`, `random_state=42`: 192 training stars and 48 test stars (8 per class in the test set). The test set is not used in model comparison or tuning. It is evaluated once, at the end.
- 
-**Why this matters for reading the results.** Each cross-validation fold tests on about 38 stars, so one misclassified star changes that fold's accuracy by about 2.6 percentage points (pp). Differences of 1 to 2 pp therefore amount to one or two stars and should not be treated as real.
- 
-### 2. Experimental design
- 
-#### 2.1 Feature sets
- 
-Feature sets are built up one step at a time, so the effect of each added feature can be measured by comparing neighbouring sets.
- 
-| Set | Features | Rationale |
-|---|---|---|
-| A | log T, log L | The two axes of the Hertzsprung-Russell diagram |
-| B | A + log R | Adds stellar size |
-| C | B + absolute magnitude (A_M) | Adds brightness on the magnitude scale; the numeric-only set |
+dds brightness on the magnitude scale; the numeric-only set |
 | D | C + spectral class (ordinal) | Tests the label flagged in cleaning for temperature mismatches |
 | E | D + color (one-hot, 12 labels) | Tests the free-text label column |
  
@@ -182,22 +153,40 @@ Because the top models are tied on accuracy, criteria 3 to 5 decide.
 | Rejected | KNN | Degraded sharply by extra features; sensitive to scaling |
 | Explanation only | Decision tree (depth 5) | Near-perfect accuracy with human-readable rules, but unstable and overconfident as a deployed model |
  
-#### 6.3 Final model
+#### 6.3 Final model (the last cell of notebook 04)
  
-The deployed pipeline accepts raw values and applies the log transform internally, so the app needs no separate preprocessing code:
+The deployed pipeline accepts raw values and applies the log transform internally, so the app needs no separate preprocessing code. **This cell creates `models/star_classifier.joblib`, which notebook 05 and the app both load, so it must be run before them.**
  
 ```python
+import joblib
+import numpy as np
+import pandas as pd
+from pathlib import Path
+from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.pipeline import make_pipeline
+from sklearn.ensemble import RandomForestClassifier
+ 
+clean = pd.read_csv("../data/stars_clean.csv")
+RAW = ["Temperature", "L", "R", "A_M"]
+ 
+# Same split settings as the comparison, so the same 48 stars stay held out
+Xr_train, Xr_test, yr_train, yr_test = train_test_split(
+    clean[RAW], clean["Type"], test_size=0.2, stratify=clean["Type"], random_state=42)
+ 
 final = make_pipeline(
-    ColumnTransformer(
-        [("log", FunctionTransformer(np.log10), ["Temperature", "L", "R"])],
-        remainder="passthrough"),
+    ColumnTransformer([("log", FunctionTransformer(np.log10), ["Temperature", "L", "R"])],
+                      remainder="passthrough"),
     RandomForestClassifier(n_estimators=300, random_state=42),
 )
-final.fit(Xr_train[["Temperature", "L", "R", "A_M"]], yr_train)
+final.fit(Xr_train, yr_train)          # trained on the 192 training stars only
+ 
+Path("../models").mkdir(exist_ok=True)
 joblib.dump(final, "../models/star_classifier.joblib")
 ```
  
-The log step is not required for a random forest but is kept so the pipeline is interchangeable with the SVM or boosting alternatives and consistent with the rest of the project.
+The log step is not required for a random forest but is kept so the pipeline is interchangeable with the SVM or boosting alternatives and consistent with the rest of the project. Both this cell and the comparison split with `test_size=0.2` and `random_state=42` on the same rows, so the held-out stars are identical; do not re-sort or filter the data between the two files.
  
 ### 7. Held-out test evaluation
  
@@ -205,11 +194,12 @@ The test set (48 stars) was used once, after selection was complete.
  
 | Metric | Result |
 |---|---|
-| Accuracy | [fill in from notebook] |
-| Macro F1 | [fill in from notebook] |
-| Misclassified stars | [fill in from notebook] |
+| Accuracy | 1.000 |
+| Macro F1 | 1.000 |
+| Log loss | 0.015 |
+| Misclassified stars | 0 of 48 |
  
-*Replace the placeholders with the output of the final evaluation cell. With only 48 test stars, one error is 2.1 pp, so report the cross-validation results alongside this figure.*
+*Full evaluation (per-class metrics, calibration, feature importance and real-star validation) is in `docs/05_evaluation_explainability.md`. With only 48 test stars, one error would be 2.1 pp, so read this alongside the cross-validation results.*
  
 ### 8. Limitations
  

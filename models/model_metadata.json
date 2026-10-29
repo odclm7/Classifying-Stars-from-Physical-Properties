@@ -1,0 +1,34 @@
+{
+  "features": [
+    "Temperature",
+    "L",
+    "R",
+    "A_M"
+  ],
+  "class_names": {
+    "0": "Red Dwarf",
+    "1": "Brown Dwarf",
+    "2": "White Dwarf",
+    "3": "Main Sequence",
+    "4": "Super Giant",
+    "5": "Hyper Giant"
+  },
+  "training_ranges": {
+    "Temperature": [
+      1939.0,
+      40000.0
+    ],
+    "L": [
+      8e-05,
+      849420.0
+    ],
+    "R": [
+      0.0084,
+      1948.5
+    ],
+    "A_M": [
+      -11.92,
+      20.06
+    ]
+  }
+}

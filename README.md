@@ -2,7 +2,7 @@
  
 Predict a star's type (red dwarf, brown dwarf, white dwarf, main sequence, super giant, hyper giant) from its physical properties, using a reproducible machine learning pipeline, an honest evaluation, and an interactive web app.
  
-**Live demo:** [add your Streamlit link here]
+**Live demo:** https://classifying-stars-from-physical-properties-mqxup2upz6zus2v7amb.streamlit.app/
  
 ![HR diagram](reports/figures/hr_diagram.png)
  
@@ -60,7 +60,7 @@ star-classification/
 ## Run it locally
  
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/odclm7/Classifying-Stars-from-Physical-Properties.git
 cd star-classification
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
@@ -72,12 +72,6 @@ pip install -r requirements.txt
 streamlit run app/app.py
 ```
  
-## Deploy the app (free)
- 
-1. Push the repository to GitHub, including `models/star_classifier.joblib`, `models/model_metadata.json` and `data/stars_clean.csv`.
-2. Make sure `requirements.txt` pins the **exact scikit-learn version** you trained with (`pip freeze | grep -i scikit`). A model saved with one version can fail or misbehave on another.
-3. On [Streamlit Community Cloud](https://streamlit.io/cloud), choose the repository, set the main file to `app/app.py`, and deploy.
-4. Paste the resulting link at the top of this README.
 ## The app
  
 Enter temperature, luminosity, radius and absolute magnitude (or load an example star). The app returns the predicted type with class probabilities, plots the star on the HR diagram against the training data, warns when confidence is below 70%, and warns when an input lies outside the training range (tree models cannot extrapolate).
